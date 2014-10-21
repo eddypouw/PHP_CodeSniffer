@@ -7,3 +7,8 @@ php:
 
 before_script:
     - composer install --prefer-source
+
+script:
+  - phpunit tests/AllTests.php
+  - pear package-validate package.xml
+  - php scripts/phpcs CodeSniffer.php CodeSniffer --standard=PEAR --report=summary --ignore=*/tests/* -np
