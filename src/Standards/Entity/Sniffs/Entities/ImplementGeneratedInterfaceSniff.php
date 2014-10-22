@@ -14,7 +14,7 @@ class Entity_Sniffs_Entities_ImplementGeneratedInterfaceSniff implements \PHP_Co
      */
     public function register()
     {
-        return array(T_CLASS);
+        return [T_CLASS];
     }
 
     /**
@@ -29,22 +29,22 @@ class Entity_Sniffs_Entities_ImplementGeneratedInterfaceSniff implements \PHP_Co
 
       //  Check if there are any interfaces implemented
         if (!$implements_interface) {
-            $error = 'Implemented class returns "FALSE"; at least the generated interface should have been returned.';
+            $error = 'The entity does not implement an interface at all, while at least the generated interface should be implemented.';
             $phpcsFile->addError($error, $stackPtr, 'ImplementGeneratedInterface', $implements_interface);
             return;
         }
 
         $interface_name        = $phpcsFile->findNext(T_STRING, $implements_interface);
         $stackPtr              = $interface_name;
-        $generated_implemented = FALSE;
-        $more_implementations  = TRUE;
+        $generated_implemented = false;
+        $more_implementations  = true;
 
         // Go through every interface that is implemented and compare with the expected path
         // While loop will stop when a Curly Bracket is opened or when the end of the file is reached
-        while($interface_name !== FALSE && $more_implementations) {
+        while ($interface_name !== false && $more_implementations) {
 
             $new_content               = $phpcsFile->getTokensAsString($interface_name, 1);
-            $looping                   = TRUE;
+            $looping                   = true;
             $content                   = "";
             $last_content              = "";
             $use_statement_declaration = "Namespace";
@@ -53,14 +53,16 @@ class Entity_Sniffs_Entities_ImplementGeneratedInterfaceSniff implements \PHP_Co
             while ($looping) {
                 $content          = $content . $new_content;
                 $interface_name   = $phpcsFile->findNext([T_STRING, T_COMMA, T_NS_SEPARATOR, T_CURLY_OPEN, T_WHITESPACE], $interface_name+1);
-                if (($phpcsFile->getTokens()[$interface_name]['code']) === T_STRING || ($phpcsFile->getTokens()[$interface_name]['code']) === T_NS_SEPARATOR) {
+                $code = $phpcsFile->getTokens()[$interface_name]['code'];
+                if (!in_array($code, [T_STRING, T_NS_SEPARATOR])) {
+                    break;
+                }
+                if ($code === T_STRING || $code === T_NS_SEPARATOR) {
                     $last_content = $new_content;
                     $new_content  = $phpcsFile->getTokensAsString($interface_name, 1);
                     if ($phpcsFile->getTokens()[$interface_name]['code'] === T_NS_SEPARATOR) {
                         $use_statement_declaration = $content;
                     }
-                }else{
-                    $looping = FALSE;
                 }
             }
 
@@ -97,19 +99,21 @@ class Entity_Sniffs_Entities_ImplementGeneratedInterfaceSniff implements \PHP_Co
     {
         // Get the namespace if it's not false
         $tokens  = $phpcsFile->getTokens();
-        $looping = TRUE;
-        if ($namespace_pointer !== FALSE) {
-            $new_content = "";$phpcsFile->getTokensAsString($phpcsFile->findNext([T_STRING, T_NS_SEPARATOR], $namespace_pointer), 1);
+        $looping = true;
+        if ($namespace_pointer !== false) {
+            $new_content = "";
             $namespace   = "";
 
             // Merge strings and NS Separators to one string, forming the full path
             while ($looping) {
                 $namespace         = $namespace . $new_content;
                 $namespace_pointer = $phpcsFile->findNext([T_STRING, T_SEMICOLON, T_NS_SEPARATOR], $namespace_pointer+1);
-                if ($tokens[$namespace_pointer]['code'] === T_STRING || $tokens[$namespace_pointer]['code'] === T_NS_SEPARATOR) {
+                $code = $tokens[$namespace_pointer]['code'];
+                if (!in_array($code, [T_STRING, T_NS_SEPARATOR])) {
+                    break;
+                }
+                if ($code === T_STRING || $code === T_NS_SEPARATOR) {
                     $new_content = $phpcsFile->getTokensAsString($namespace_pointer, 1);
-                }else{
-                    $looping = FALSE;
                 }
             }
         }
@@ -130,39 +134,41 @@ class Entity_Sniffs_Entities_ImplementGeneratedInterfaceSniff implements \PHP_Co
         $statement_pointer = [];
 
         // Find the pointers to where the use statements start
-        while($stack_pointer !== FALSE) {
+        while ($stack_pointer !== false) {
             $stack_pointer = $phpcsFile->findNext([T_USE, T_CLASS], $stack_pointer+1);
-            if($phpcsFile->getTokens()[$stack_pointer]['code'] === T_CLASS) {
-                $stack_pointer = FALSE;
-            }else{
-                array_push($statement_pointer, $stack_pointer);
+            $code = $phpcsFile->getTokens()[$stack_pointer]['code'];
+            if (in_array($code, [T_CLASS])) {
+                break;
             }
+            array_push($statement_pointer, $stack_pointer);
         }
 
         // Get the full paths of the use statements
         foreach ($statement_pointer as $stack_pointer) {
             $tokens        = $phpcsFile->getTokens();
-            $looping       = TRUE;
-            $ignore_string = FALSE;
+            $looping       = true;
+            $ignore_string = false;
             $statement     = "";
             $new_content   = "";
 
             // Merge all strings and NS Separators to one string, which represents the full path
             // Stop merging when a semicolon is found
             while ($looping) {
-                if(!$ignore_string){
+                if (!$ignore_string) {
                     $statement    = $statement . $new_content;
                 }
                 $stack_pointer = $phpcsFile->findNext([T_STRING, T_SEMICOLON, T_NS_SEPARATOR, T_AS], $stack_pointer+1);
                 $index         = $new_content;
                 $new_content   = $phpcsFile->getTokensAsString($stack_pointer, 1);
 
+                $code = $tokens[$stack_pointer]['code'];
+                if (in_array($code, [T_SEMICOLON])) {
+                    $use_statements[$index] = $statement;
+                    break;
+                }
                 if ($tokens[$stack_pointer]['code'] === T_AS) {
                     $index = $phpcsFile->findNext(T_STRING, $stack_pointer);
-                    $ignore_string = TRUE;
-                }elseif ($tokens[$stack_pointer]['code'] === T_SEMICOLON){
-                    $use_statements[$index] = $statement;
-                    $looping = FALSE;
+                    $ignore_string = true;
                 }
             }
         }

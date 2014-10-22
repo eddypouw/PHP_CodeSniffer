@@ -23,7 +23,7 @@ class Entity_Entities_ImplementGeneratedInterfaceUnitTest extends AbstractSniffU
         }else{
             return [];
         }
-    }//end getErrorList()
+    }
 
     /**
      * Returns the lines where warnings should occur.
@@ -35,11 +35,9 @@ class Entity_Entities_ImplementGeneratedInterfaceUnitTest extends AbstractSniffU
      */
     public function getWarningList()
     {
-        return array();
+        return [];
 
-    }//end getWarningList()
-
-
-}//end class
+    }
+}
 
 
