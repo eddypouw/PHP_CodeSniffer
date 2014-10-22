@@ -300,11 +300,11 @@ class PHP_CodeSniffer_Tokenizers_PHP
                     $comment = $tokenLines[0];
                     $commentToken['content'] = $comment;
                     $commentToken['type'] = 'T_COMMENT';
-                    $commentToken['code'] = 372;
+                    $commentToken['code'] = T_COMMENT;
                     $commentToken['line'] = $token[2];
                     $newlineToken['content'] = "\n";
                     $newlineToken['type'] = 'T_WHITESPACE';
-                    $newlineToken['code'] = 377;
+                    $newlineToken['code'] = T_WHITESPACE;
                     $newlineToken['line'] = $token[2];
                     $finalTokens[$newStackPtr] = $commentToken;
                     $finalTokens[$newStackPtr + 1] = $newlineToken;
