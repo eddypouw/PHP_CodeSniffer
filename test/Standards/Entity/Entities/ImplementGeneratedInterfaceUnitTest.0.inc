@@ -11,7 +11,7 @@ class Entity implements mooi, test2, /* af  */
 
  
  
- ntityInterface, Nope/test4, Automatisch\EntityInterface
+ ntityInterface, Nope\test4, Automatisch\EntityInterface, jh
 {
     
 }

@@ -48,6 +48,7 @@ class Entity_Sniffs_Entities_ImplementGeneratedInterfaceSniff implements \PHP_Co
 
             // Merge the different strings of the interfaces to one string
             while (true) {
+                $last_content = $content;
                 $content          = $content . $new_content;
                 $interface_name   = $phpcsFile->findNext([T_STRING, T_COMMA, T_NS_SEPARATOR, T_CURLY_OPEN, T_WHITESPACE], $interface_name+1);
                 $code = $phpcsFile->getTokens()[$interface_name]['code'];
@@ -55,15 +56,15 @@ class Entity_Sniffs_Entities_ImplementGeneratedInterfaceSniff implements \PHP_Co
                     break;
                 }
                 if ($code === T_STRING || $code === T_NS_SEPARATOR) {
-                    $last_content = $new_content;
+                    if ($code !== T_NS_SEPARATOR) {
+                        $use_statement_declaration = $last_content;
+                    }
                     $new_content  = $phpcsFile->getTokensAsString($interface_name, 1);
-                    $use_statement_declaration = $content;
                 }
             }
 
             // Check if the interface uses one of the use statements
             if (array_key_exists($use_statement_declaration, $paths)) {
-                $declaration_string = $phpcsFile->getTokensAsString($interface_name, 1);
                 $interface_path     = $paths[$use_statement_declaration] . "\\" . $new_content;
             }else{
                 $interface_path     = $paths['Namespace'] . "\\" . $content;
@@ -76,6 +77,7 @@ class Entity_Sniffs_Entities_ImplementGeneratedInterfaceSniff implements \PHP_Co
                 return;
             }
 
+            $stack_ptr       = $interface_name;
             $interface_name = $phpcsFile->findNext(T_STRING, $stack_ptr+1);
         }
 
