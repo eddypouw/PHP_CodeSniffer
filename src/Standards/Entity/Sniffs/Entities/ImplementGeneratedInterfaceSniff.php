@@ -20,37 +20,34 @@ class Entity_Sniffs_Entities_ImplementGeneratedInterfaceSniff implements \PHP_Co
     /**
      * @see PHP_CodeSniffer_Sniff::process()
      */
-    public function process(PHP_CodeSniffer_File $phpcsFile, $stackPtr)
+    public function process(PHP_CodeSniffer_File $phpcsFile, $stack_ptr)
     {
-        $class                = $phpcsFile->getDeclarationName($stackPtr);
-        $namespace_pointer    = $phpcsFile->findPrevious([T_NAMESPACE], $stackPtr);
-        $implements_interface = $phpcsFile->findNext([T_IMPLEMENTS], $stackPtr);
+        $class                = $phpcsFile->getDeclarationName($stack_ptr);
+        $namespace_pointer    = $phpcsFile->findPrevious([T_NAMESPACE], $stack_ptr);
+        $implements_interface = $phpcsFile->findNext([T_IMPLEMENTS], $stack_ptr);
         $paths                = $this->getFullQualifiedPath($phpcsFile, $namespace_pointer);
 
       //  Check if there are any interfaces implemented
         if (!$implements_interface) {
             $error = 'The entity does not implement an interface at all, while at least the generated interface should be implemented.';
-            $phpcsFile->addError($error, $stackPtr, 'ImplementGeneratedInterface', $implements_interface);
+            $phpcsFile->addError($error, $stack_ptr, 'ImplementGeneratedInterface', $implements_interface);
             return;
         }
 
         $interface_name        = $phpcsFile->findNext(T_STRING, $implements_interface);
-        $stackPtr              = $interface_name;
         $generated_implemented = false;
-        $more_implementations  = true;
 
         // Go through every interface that is implemented and compare with the expected path
         // While loop will stop when a Curly Bracket is opened or when the end of the file is reached
-        while ($interface_name !== false && $more_implementations) {
+        while ($interface_name !== false) {
 
             $new_content               = $phpcsFile->getTokensAsString($interface_name, 1);
-            $looping                   = true;
             $content                   = "";
             $last_content              = "";
             $use_statement_declaration = "Namespace";
 
             // Merge the different strings of the interfaces to one string
-            while ($looping) {
+            while (true) {
                 $content          = $content . $new_content;
                 $interface_name   = $phpcsFile->findNext([T_STRING, T_COMMA, T_NS_SEPARATOR, T_CURLY_OPEN, T_WHITESPACE], $interface_name+1);
                 $code = $phpcsFile->getTokens()[$interface_name]['code'];
@@ -60,9 +57,7 @@ class Entity_Sniffs_Entities_ImplementGeneratedInterfaceSniff implements \PHP_Co
                 if ($code === T_STRING || $code === T_NS_SEPARATOR) {
                     $last_content = $new_content;
                     $new_content  = $phpcsFile->getTokensAsString($interface_name, 1);
-                    if ($phpcsFile->getTokens()[$interface_name]['code'] === T_NS_SEPARATOR) {
-                        $use_statement_declaration = $content;
-                    }
+                    $use_statement_declaration = $content;
                 }
             }
 
@@ -73,7 +68,7 @@ class Entity_Sniffs_Entities_ImplementGeneratedInterfaceSniff implements \PHP_Co
             }else{
                 $interface_path     = $paths['Namespace'] . "\\" . $content;
             }
-                $class_path         = $paths['Namespace'] . "\\Generated\\" . $class . 'Interface';
+            $class_path         = $paths['Namespace'] . "\\Generated\\" . $class . 'Interface';
 
             // Compare the interface path with the expected, generated interface path
             // Return if the expected path is the same as the current path
@@ -81,12 +76,11 @@ class Entity_Sniffs_Entities_ImplementGeneratedInterfaceSniff implements \PHP_Co
                 return;
             }
 
-            $stackPtr       = $interface_name;
-            $interface_name = $phpcsFile->findNext(T_STRING, $stackPtr+1);
+            $interface_name = $phpcsFile->findNext(T_STRING, $stack_ptr+1);
         }
 
         $error = 'None of the implemented interfaces in the class is the generated class. Make sure you use the generated interface too.';
-        $phpcsFile->addError($error, $stackPtr, 'ImplementGeneratedInterface');
+        $phpcsFile->addError($error, $stack_ptr, 'ImplementGeneratedInterface');
     }
 
     /**
@@ -95,26 +89,23 @@ class Entity_Sniffs_Entities_ImplementGeneratedInterfaceSniff implements \PHP_Co
      * @param number $namespace_pointer Indicates where the namespace is in the token stack
      * @return array An array that contains both the namespace and all the use statements
      */
-    private function getFullQualifiedPath (PHP_CodeSniffer_File $phpcsFile, $namespace_pointer = 0)
+    private function getFullQualifiedPath(PHP_CodeSniffer_File $phpcsFile, $namespace_pointer = 0)
     {
         // Get the namespace if it's not false
         $tokens  = $phpcsFile->getTokens();
-        $looping = true;
         if ($namespace_pointer !== false) {
             $new_content = "";
             $namespace   = "";
 
             // Merge strings and NS Separators to one string, forming the full path
-            while ($looping) {
+            while (true) {
                 $namespace         = $namespace . $new_content;
                 $namespace_pointer = $phpcsFile->findNext([T_STRING, T_SEMICOLON, T_NS_SEPARATOR], $namespace_pointer+1);
                 $code = $tokens[$namespace_pointer]['code'];
                 if (!in_array($code, [T_STRING, T_NS_SEPARATOR])) {
                     break;
                 }
-                if ($code === T_STRING || $code === T_NS_SEPARATOR) {
-                    $new_content = $phpcsFile->getTokensAsString($namespace_pointer, 1);
-                }
+                $new_content = $phpcsFile->getTokensAsString($namespace_pointer, 1);
             }
         }
         $return_array              = $this->retrieveUseStatements($phpcsFile);
@@ -146,14 +137,13 @@ class Entity_Sniffs_Entities_ImplementGeneratedInterfaceSniff implements \PHP_Co
         // Get the full paths of the use statements
         foreach ($statement_pointer as $stack_pointer) {
             $tokens        = $phpcsFile->getTokens();
-            $looping       = true;
             $ignore_string = false;
             $statement     = "";
             $new_content   = "";
 
             // Merge all strings and NS Separators to one string, which represents the full path
             // Stop merging when a semicolon is found
-            while ($looping) {
+            while (true) {
                 if (!$ignore_string) {
                     $statement    = $statement . $new_content;
                 }
@@ -162,7 +152,7 @@ class Entity_Sniffs_Entities_ImplementGeneratedInterfaceSniff implements \PHP_Co
                 $new_content   = $phpcsFile->getTokensAsString($stack_pointer, 1);
 
                 $code = $tokens[$stack_pointer]['code'];
-                if (in_array($code, [T_SEMICOLON])) {
+                if ($code === T_SEMICOLON) {
                     $use_statements[$index] = $statement;
                     break;
                 }
