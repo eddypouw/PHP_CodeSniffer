@@ -94,9 +94,10 @@ class Entity_Sniffs_Entities_ImplementGeneratedInterfaceSniff implements \PHP_Co
         // Get the namespace if it's not false
         $tokens      = $phpcs_file->getTokens();
         $new_content = "";
-        $namespace   = "";
 
         if ($namespace_pointer !== false) {
+            $namespace   = "";
+
             // Merge strings and NS Separators to one string, forming the full path
             while (true) {
                 $namespace         = $namespace . $new_content;
