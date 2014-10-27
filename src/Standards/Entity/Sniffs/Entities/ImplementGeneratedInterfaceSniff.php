@@ -92,11 +92,11 @@ class Entity_Sniffs_Entities_ImplementGeneratedInterfaceSniff implements \PHP_Co
     private function getFullQualifiedPath(PHP_CodeSniffer_File $phpcs_file, $namespace_pointer = 0)
     {
         // Get the namespace if it's not false
-        $tokens = $phpcs_file->getTokens();
-        if ($namespace_pointer !== false) {
-            $new_content = "";
-            $namespace   = "";
+        $tokens      = $phpcs_file->getTokens();
+        $new_content = "";
+        $namespace   = "";
 
+        if ($namespace_pointer !== false) {
             // Merge strings and NS Separators to one string, forming the full path
             while (true) {
                 $namespace         = $namespace . $new_content;
