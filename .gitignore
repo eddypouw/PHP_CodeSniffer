@@ -1,6 +1,5 @@
 /CodeSniffer.conf
 /phpunit.xml
-.project
 .buildpath
 /vendor
 composer.lock
